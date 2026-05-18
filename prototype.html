@@ -1,0 +1,932 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8" />
+<title>Veilbreak Bureau — Prototype</title>
+<meta name="viewport" content="width=device-width,initial-scale=1" />
+<style>
+  :root{
+    --paper:#e8dcc0;
+    --paper-dark:#c4b58e;
+    --ink:#1a1410;
+    --rust:#a4441e;
+    --moss:#4a6a3a;
+    --slate:#3a4858;
+    --cork:#8a6840;
+    --cork-dark:#5a4220;
+    --thread-red:#c84a3a;
+    --thread-blue:#4a5a8a;
+    --gold:#caa050;
+  }
+  *{box-sizing:border-box}
+  html,body{margin:0;padding:0;height:100%;background:#1a1208;color:var(--paper);font-family:'Georgia','Times New Roman',serif;overflow:hidden;user-select:none}
+  #wrap{position:relative;width:100vw;height:100vh;display:flex;align-items:center;justify-content:center}
+  canvas{display:block;background:var(--cork);cursor:default;box-shadow:0 0 80px rgba(0,0,0,.9) inset, 0 0 60px rgba(0,0,0,.8)}
+
+  /* Title */
+  #title-card{position:absolute;inset:0;background:radial-gradient(ellipse,#2a1a10 0%,#0a0604 100%);display:flex;flex-direction:column;align-items:center;justify-content:center;z-index:50;cursor:pointer}
+  #title-card h1{font-size:54px;color:var(--paper);margin:0;letter-spacing:8px;text-shadow:0 0 30px rgba(202,160,80,.4);font-variant:small-caps}
+  #title-card .sub{color:var(--gold);font-style:italic;letter-spacing:4px;margin-top:8px;font-size:14px}
+  #title-card .start{margin-top:40px;background:transparent;border:2px solid var(--gold);color:var(--gold);padding:14px 36px;font-family:Georgia,serif;font-size:14px;cursor:pointer;letter-spacing:4px}
+  #title-card .start:hover{background:var(--gold);color:var(--ink)}
+  #title-card .hint{margin-top:32px;color:#a8967a;font-size:12px;letter-spacing:2px;max-width:560px;text-align:center;line-height:1.9}
+
+  /* Briefing */
+  #briefing{position:absolute;inset:0;background:rgba(20,12,4,.92);display:none;flex-direction:column;align-items:center;justify-content:center;z-index:40;padding:40px}
+  #briefing .file{background:#d8c8a0;color:#1a1410;padding:40px 60px;border:1px solid #8a7a52;box-shadow:0 30px 80px rgba(0,0,0,.7);max-width:680px;width:100%;font-family:'Courier New',monospace;transform:rotate(-1deg)}
+  #briefing h2{margin:0 0 4px;letter-spacing:8px;color:var(--rust);font-size:18px}
+  #briefing .stamp{position:absolute;top:60px;right:60px;border:3px solid var(--rust);color:var(--rust);padding:8px 18px;font-weight:bold;letter-spacing:3px;transform:rotate(8deg);opacity:.85}
+  #briefing .field{margin:14px 0;font-size:14px;line-height:1.6}
+  #briefing .field b{color:var(--rust);letter-spacing:1px}
+  #briefing .proceed{margin-top:30px;background:var(--ink);color:var(--paper);border:none;padding:14px 36px;font-family:Georgia,serif;font-size:13px;cursor:pointer;letter-spacing:3px}
+  #briefing .proceed:hover{background:var(--rust)}
+
+  /* HUD */
+  #topbar{position:absolute;top:14px;left:14px;display:flex;gap:18px;font-size:11px;letter-spacing:2px;color:var(--paper);pointer-events:none;text-transform:uppercase}
+  #topbar .pill{background:rgba(20,16,8,.7);border:1px solid rgba(202,160,80,.4);padding:6px 14px}
+  #topbar .pill b{color:var(--gold);margin-left:6px}
+  #toolbar{position:absolute;top:14px;right:14px;display:flex;gap:8px}
+  #toolbar button{background:rgba(20,16,8,.85);border:1px solid var(--gold);color:var(--paper);padding:8px 16px;font-family:Georgia,serif;font-size:11px;cursor:pointer;letter-spacing:2px;text-transform:uppercase}
+  #toolbar button:hover{background:var(--gold);color:var(--ink)}
+
+  /* Scenes bar */
+  #scenes{position:absolute;left:14px;top:60px;width:200px;background:rgba(20,16,8,.78);border:1px solid rgba(202,160,80,.3);padding:10px}
+  #scenes h3{margin:0 0 8px;color:var(--gold);font-size:11px;letter-spacing:3px;text-align:center;text-transform:uppercase;border-bottom:1px solid rgba(202,160,80,.3);padding-bottom:6px}
+  #scenes .scene{padding:8px 10px;margin:4px 0;background:rgba(60,40,20,.6);border:1px solid rgba(202,160,80,.2);cursor:pointer;font-size:12px;color:var(--paper);transition:all .15s}
+  #scenes .scene:hover{background:rgba(80,60,40,.8);border-color:var(--gold)}
+  #scenes .scene.done{opacity:.4;cursor:default}
+  #scenes .scene .small{display:block;font-size:9px;color:#a8967a;letter-spacing:1px;margin-top:2px}
+
+  /* Suspect interview modal */
+  #interview{position:absolute;left:50%;top:50%;transform:translate(-50%,-50%);background:#d8c8a0;color:#1a1410;padding:30px;border:2px solid var(--ink);box-shadow:0 30px 80px rgba(0,0,0,.7);display:none;width:520px;font-family:'Georgia',serif;z-index:30}
+  #interview h3{margin:0 0 4px;color:var(--rust);letter-spacing:2px}
+  #interview .occ{font-style:italic;color:#5a4a30;margin-bottom:14px;font-size:13px}
+  #interview .quote{padding:14px;background:rgba(0,0,0,.06);border-left:3px solid var(--rust);font-style:italic;line-height:1.65;font-size:14px}
+  #interview .close{margin-top:18px;background:var(--ink);color:var(--paper);border:none;padding:8px 18px;font-family:Georgia,serif;cursor:pointer;letter-spacing:2px}
+
+  /* Accusation panel */
+  #accusation{position:absolute;left:50%;bottom:14px;transform:translateX(-50%);background:rgba(20,12,4,.92);border:1px solid var(--gold);padding:12px 18px;display:flex;gap:14px;align-items:center;font-size:12px;letter-spacing:1.5px;color:var(--paper)}
+  #accusation select{background:#3a2818;color:var(--paper);border:1px solid var(--gold);padding:6px 8px;font-family:Georgia,serif;font-size:12px;min-width:120px}
+  #accusation button{background:var(--rust);color:var(--paper);border:none;padding:8px 22px;font-family:Georgia,serif;font-size:13px;cursor:pointer;letter-spacing:3px;text-transform:uppercase}
+  #accusation button:hover{background:#c95a30}
+  #accusation button:disabled{background:#5a4030;cursor:not-allowed;color:#a8967a}
+
+  /* Endcard */
+  #endcard{position:absolute;inset:0;background:rgba(20,12,4,.96);display:none;flex-direction:column;align-items:center;justify-content:center;z-index:40;color:var(--paper);padding:40px}
+  #endcard h2{margin:0 0 14px;letter-spacing:10px;color:var(--gold);font-size:32px}
+  #endcard h2.fail{color:var(--rust)}
+  #endcard p{max-width:580px;text-align:center;line-height:1.85;font-size:15px;margin:6px 0}
+  #endcard .reveal{margin:20px 0;padding:18px 24px;background:rgba(202,160,80,.06);border:1px solid rgba(202,160,80,.3);font-style:italic;font-size:13px;line-height:1.8}
+  #endcard button{margin-top:24px;background:transparent;color:var(--paper);border:1px solid var(--paper);padding:12px 30px;font-family:Georgia,serif;cursor:pointer;letter-spacing:3px}
+  #endcard button:hover{background:var(--paper);color:var(--ink)}
+
+  /* Feedback tag */
+  #verdict-tag{position:absolute;pointer-events:none;font-size:10px;letter-spacing:3px;padding:4px 8px;text-transform:uppercase;font-weight:bold;background:#fff;color:var(--ink);box-shadow:0 4px 12px rgba(0,0,0,.5);opacity:0;transition:opacity .3s;z-index:25}
+  #verdict-tag.show{opacity:1}
+  #verdict-tag.strong{background:#4a6a3a;color:#fff}
+  #verdict-tag.weak{background:#a4441e;color:#fff}
+  #verdict-tag.ambig{background:#9a8540;color:#fff}
+</style>
+</head>
+<body>
+<div id="wrap">
+  <canvas id="game" width="1280" height="720"></canvas>
+
+  <div id="topbar">
+    <div class="pill">Case <b id="caseId">#0000</b></div>
+    <div class="pill">Rank <b>Inspector</b></div>
+    <div class="pill">Clues <b id="clueCount">0</b></div>
+    <div class="pill">Deadline <b id="deadline">3 days</b></div>
+  </div>
+
+  <div id="toolbar">
+    <button onclick="newCase()">↻ New Case</button>
+    <button onclick="showBriefing()">📜 Case File</button>
+  </div>
+
+  <div id="scenes">
+    <h3>::Scenes::</h3>
+    <div id="sceneList"></div>
+  </div>
+
+  <div id="interview">
+    <h3 id="ivName">—</h3>
+    <div class="occ" id="ivOcc">—</div>
+    <div class="quote" id="ivQuote">—</div>
+    <button class="close" onclick="closeInterview()">✕ End Interview</button>
+  </div>
+
+  <div id="accusation">
+    <span>I accuse</span>
+    <select id="accSuspect"></select>
+    <span>with</span>
+    <select id="accWeapon"></select>
+    <span>for</span>
+    <select id="accMotive"></select>
+    <button id="accBtn" disabled onclick="makeAccusation()">⚖ Make Accusation</button>
+  </div>
+
+  <div id="title-card">
+    <h1>VEILBREAK&nbsp;BUREAU</h1>
+    <div class="sub">~ a procedural detective roguelike ~</div>
+    <button class="start" onclick="newCase()">▼  ENTER THE BUREAU  ▼</button>
+    <div class="hint">
+      Click <b>Scenes</b> on the left to examine and discover <b>Clue Cards</b>.<br>
+      Click a <b>Suspect Card</b> on the board to interview them.<br>
+      <b>Drag Clue Cards onto Suspects</b> — pin your theory live. Watch evidence light up.<br><br>
+      When you have <b>Suspect + Weapon + Motive</b> figured out, make the accusation.<br>
+      <span style="color:#caa050">Every case is procedurally generated. Every case has exactly one answer.</span>
+    </div>
+  </div>
+
+  <div id="briefing">
+    <div class="file">
+      <div class="stamp">CASE OPEN</div>
+      <h2>BUREAU CASE FILE</h2>
+      <div style="font-size:10px;letter-spacing:3px;color:#7a6a40;margin-bottom:14px">CLASSIFIED · INTERNAL · 1924</div>
+      <div class="field"><b>Case No:</b> <span id="bfId">—</span></div>
+      <div class="field"><b>Victim:</b> <span id="bfVictim">—</span></div>
+      <div class="field"><b>Location:</b> <span id="bfLocation">—</span></div>
+      <div class="field"><b>Time of Death:</b> <span id="bfTime">—</span></div>
+      <div class="field"><b>Initial Observations:</b><br><span id="bfObs">—</span></div>
+      <div class="field"><b>Persons of Interest:</b><br><span id="bfPersons">—</span></div>
+      <button class="proceed" onclick="closeBriefing()">▶ PROCEED TO PINBOARD</button>
+    </div>
+  </div>
+
+  <div id="endcard">
+    <h2 id="endTitle">—</h2>
+    <p id="endBody">—</p>
+    <div class="reveal" id="endReveal">—</div>
+    <p id="endStats" style="opacity:.6;font-size:12px"></p>
+    <button onclick="newCase()">▼ TAKE THE NEXT CASE ▼</button>
+  </div>
+
+  <div id="verdict-tag">—</div>
+</div>
+
+<script>
+'use strict';
+// =========================================================================
+// VEILBREAK BUREAU — Prototype
+// Procedural mystery generator + diegetic pinboard + accusation system.
+// Every case has exactly one logical solution.
+// =========================================================================
+
+const canvas = document.getElementById('game');
+const ctx = canvas.getContext('2d');
+const W = canvas.width, H = canvas.height;
+
+// ---------------------------------------------------------------------
+// CONTENT POOLS
+// ---------------------------------------------------------------------
+const SUSPECT_POOL = [
+  { name:'Eleanor Vance',     occ:'Concert Pianist',   skin:'#e8c8a0', hair:'#3a2818', cloth:'#5a2818' },
+  { name:'Reverend Holcombe', occ:'Parish Vicar',       skin:'#d8b890', hair:'#a8a8a0', cloth:'#1f1a14' },
+  { name:'Cyril Marsh',       occ:'Apothecary',         skin:'#c8a880', hair:'#5a3a18', cloth:'#3a4a5a' },
+  { name:'Lady Westmore',     occ:'Society Widow',      skin:'#f0d4b0', hair:'#a08a70', cloth:'#6a2a4a' },
+  { name:'Tobias Lin',        occ:'Stage Magician',     skin:'#d0a878', hair:'#0a0a0a', cloth:'#4a3a1a' },
+  { name:'Inspector Crane',   occ:'Retired Detective',  skin:'#c8b890', hair:'#7a7a70', cloth:'#3a3a4a' },
+  { name:'Greta Solberg',     occ:'Locksmith',          skin:'#f0d4a8', hair:'#caa050', cloth:'#5a4a30' },
+  { name:'Dr. Ashe',          occ:'Surgeon',            skin:'#e0c4a0', hair:'#1a1a1a', cloth:'#7a3a3a' },
+  { name:'Wendell Pike',      occ:'Newspaper Editor',   skin:'#d8b890', hair:'#4a2a18', cloth:'#3a4a3a' },
+  { name:'Madame Iliescu',    occ:'Spiritualist',       skin:'#caa088', hair:'#2a1a0a', cloth:'#5a3a6a' },
+];
+
+const WEAPONS = [
+  { id:'piano-wire',     name:'Piano Wire',     occ:'Concert Pianist' },
+  { id:'cyanide',        name:'Cyanide Vial',   occ:'Apothecary' },
+  { id:'scalpel',        name:'Surgical Scalpel', occ:'Surgeon' },
+  { id:'ritual-dagger',  name:'Ritual Dagger',  occ:'Spiritualist' },
+  { id:'pulpit-candle',  name:'Pulpit Candle',  occ:'Parish Vicar' },
+  { id:'iron-skeleton',  name:'Iron Skeleton Key', occ:'Locksmith' },
+  { id:'stage-pistol',   name:'Stage Pistol',   occ:'Stage Magician' },
+  { id:'antique-revolver', name:'Antique Revolver', occ:'Retired Detective' },
+  { id:'press-mallet',   name:'Press Mallet',   occ:'Newspaper Editor' },
+  { id:'hat-pin',        name:'Hat Pin',        occ:'Society Widow' },
+];
+
+const MOTIVES = [
+  { id:'inheritance', name:'Inheritance',    text:'an unwritten clause in the victim\'s will' },
+  { id:'blackmail',   name:'Blackmail',      text:'the victim was extorting them' },
+  { id:'jealousy',    name:'Jealousy',       text:'a love long since soured' },
+  { id:'revenge',     name:'Revenge',        text:'an old wound the victim never apologised for' },
+  { id:'secrecy',     name:'Secrecy',        text:'the victim had uncovered something fatal to know' },
+  { id:'debt',        name:'Debt',           text:'a sum of money the victim was about to call in' },
+];
+
+const VICTIMS = [
+  'Lord Ambrose Halloway','Doctor Ines Rourke','Sir Reginald Tate','Mlle. Beatrice Lévy',
+  'Old Man Harker','Professor Quill','Mayor Whitcomb','Mistress Hollins',
+];
+
+const LOCATIONS = [
+  'the Opera House library','the Westwind Hotel suite','the Bureau\'s archives','the Foggate docks',
+  'the Veiled Lantern speakeasy','the cathedral cloister','the Hallowed Park observatory','the Marsh & Co. shop',
+];
+
+const TIMES = ['just after midnight','during the third act','at the stroke of the eleventh hour','in the small hours before dawn'];
+
+const SCENE_TYPES = ['Crime Scene','Suspect\'s Lodging','Victim\'s Study','Witness Account'];
+
+// ---------------------------------------------------------------------
+// STATE
+// ---------------------------------------------------------------------
+const state = {
+  caseId: '',
+  victim: '',
+  location: '',
+  time: '',
+  obs: '',
+  suspects: [],         // 5 suspects (slot 0..4)
+  culprit: null,        // suspect index
+  weapon: null,         // weapon id
+  motive: null,         // motive id
+  clues: [],            // generated clue cards
+  visibleClues: [],     // clues player has discovered
+  scenes: [],           // 4 scenes
+  pinned: {},           // clueId -> {targetType, targetId}
+  drag: null,
+  dragOffset: {x:0,y:0},
+  hoverSuspect: -1,
+  hoverClue: null,
+  solved: false,
+  ended: false,
+  feedbackPulses: [],
+};
+
+// ---------------------------------------------------------------------
+// GENERATOR
+// ---------------------------------------------------------------------
+function rand(a) { return a[Math.floor(Math.random()*a.length)]; }
+function shuffle(a) { a=a.slice(); for (let i=a.length-1;i>0;i--){const j=Math.floor(Math.random()*(i+1));[a[i],a[j]]=[a[j],a[i]]} return a; }
+
+let cidSeq = 0;
+function generateCase() {
+  // Reset
+  state.suspects = [];
+  state.clues = [];
+  state.visibleClues = [];
+  state.scenes = [];
+  state.pinned = {};
+  state.solved = false;
+  state.ended = false;
+
+  // Case meta
+  state.caseId = '#' + (1024 + Math.floor(Math.random()*9000));
+  state.victim = rand(VICTIMS);
+  state.location = rand(LOCATIONS);
+  state.time = rand(TIMES);
+
+  // Pick suspects — 5 from pool
+  const pool = shuffle(SUSPECT_POOL).slice(0, 5);
+  state.suspects = pool.map((s, i) => ({
+    ...s, slot: i, alibi: '', interviewLine: '',
+  }));
+
+  // Pick culprit, weapon (matching culprit's occupation), motive
+  const culpritIdx = Math.floor(Math.random()*5);
+  state.culprit = culpritIdx;
+  const culprit = state.suspects[culpritIdx];
+  // Find weapon matching culprit's occupation
+  const wpn = WEAPONS.find(w => w.occ === culprit.occ);
+  state.weapon = wpn.id;
+  state.motive = rand(MOTIVES).id;
+  const motiveData = MOTIVES.find(m => m.id === state.motive);
+
+  // Observations text
+  state.obs = `The body was discovered in ${state.location}, ${state.time}. The wound is consistent with ${WEAPONS.find(w=>w.id===state.weapon).name.toLowerCase()}, though the bureau has not yet confirmed the type. There is no sign of forced entry.`;
+
+  // Generate alibis — only the culprit's is false
+  for (let i = 0; i < state.suspects.length; i++) {
+    const s = state.suspects[i];
+    if (i === culpritIdx) {
+      s.alibi = `Claims to have been at ${rand(LOCATIONS.filter(l=>l!==state.location))}, ${state.time}. No witnesses.`;
+      s.interviewLine = `"I had nothing to do with ${state.victim}. We barely knew one another. ${pickFalseDenial()}"`;
+    } else {
+      const altLoc = rand(LOCATIONS.filter(l=>l!==state.location));
+      s.alibi = `Verified to have been at ${altLoc}, ${state.time}.`;
+      s.interviewLine = `"${rand([
+        'A tragedy. ' + state.victim + ' deserved better.',
+        'I cannot pretend grief I do not feel — but neither was I there.',
+        'Inspector, ask whomever you must. I have nothing to hide.',
+        'I last saw them three days hence. Vigorous. Untroubled. Or so I thought.',
+        'I had no quarrel with them. Bureau records can confirm it.'
+      ])}"`;
+    }
+  }
+
+  // ----- Generate Clue Cards -----
+  // 1. CULPRIT CLUES (these uniquely implicate)
+  state.clues.push(makeClue(
+    `A witness places ${culprit.name} near ${state.location} ${state.time}, despite their stated alibi.`,
+    { suspectId: culpritIdx }, 'Crime Scene'
+  ));
+  state.clues.push(makeClue(
+    `The weapon recovered — a ${wpn.name.toLowerCase()} — is associated with the trade of a ${wpn.occ}.`,
+    { weaponId: wpn.id }, 'Crime Scene'
+  ));
+  state.clues.push(makeClue(
+    `Bureau records show ${culprit.name}, a ${culprit.occ}, has unrestricted professional access to ${wpn.name.toLowerCase()}.`,
+    { suspectId: culpritIdx, weaponId: wpn.id }, 'Suspect\'s Lodging'
+  ));
+  state.clues.push(makeClue(
+    `${state.victim}'s private journal references ${motiveData.text} — naming ${culprit.name}.`,
+    { suspectId: culpritIdx, motiveId: motiveData.id }, 'Victim\'s Study'
+  ));
+  state.clues.push(makeClue(
+    `A neighbour of ${state.victim} reports a heated argument with ${culprit.name} in the week prior.`,
+    { suspectId: culpritIdx }, 'Witness Account'
+  ));
+
+  // 2. ALIBI CLUES (exonerate non-culprits)
+  for (let i = 0; i < state.suspects.length; i++) {
+    if (i === culpritIdx) continue;
+    const s = state.suspects[i];
+    state.clues.push(makeClue(
+      `${s.name} was witnessed at ${s.alibi.replace('Verified to have been at ','').replace('.','').trim()}. Their alibi is corroborated.`,
+      { exoneratesId: i }, rand(SCENE_TYPES)
+    ));
+  }
+
+  // 3. RED HERRINGS — interesting but not implicating
+  const herrings = [
+    `A torn ${rand(['scarf','playing card','glove','envelope'])} was found near the scene — ownership unclear.`,
+    `${rand(state.suspects.filter((_,i)=>i!==culpritIdx)).name} was overheard speaking of ${state.victim} only days before — but in praise.`,
+    `An unsigned letter in ${state.victim}'s desk warns of "${rand(['the storm','the veil','the debt','the door'])}". Its author is anonymous.`,
+    `A faint sigil was chalked on a wall near the scene — likely the act of city pranksters; no occult registry match.`,
+  ];
+  for (const t of herrings) {
+    state.clues.push(makeClue(t, { redHerring: true }, rand(SCENE_TYPES)));
+  }
+
+  // 4. FORENSIC clue narrowing weapon
+  state.clues.push(makeClue(
+    `Forensic analysis of the wound rules out blunt instruments, firearms, and chemical agents. The weapon was bladed or thread-like.`,
+    { weaponHint: ['piano-wire','scalpel','ritual-dagger','hat-pin'].includes(wpn.id) },
+    'Crime Scene'
+  ));
+
+  // ----- Build Scenes (group clues by sceneType, 3-5 per scene) -----
+  const grouped = {};
+  for (const t of SCENE_TYPES) grouped[t] = [];
+  for (const c of state.clues) (grouped[c.scene] || (grouped[c.scene] = [])).push(c);
+  state.scenes = SCENE_TYPES.map(t => ({
+    name: t,
+    description: ({
+      'Crime Scene': 'the place where ' + state.victim + ' fell — ' + state.location,
+      'Suspect\'s Lodging': 'a rented room searched under bureau warrant',
+      'Victim\'s Study': state.victim + '\'s private papers and effects',
+      'Witness Account': 'statements taken from those who knew the deceased',
+    })[t],
+    clueIds: grouped[t].map(c=>c.id),
+    examined: false,
+  }));
+
+  // Layout clues on pinboard (initially off-board, revealed as scenes examined)
+  for (const c of state.clues) {
+    c.x = 280 + Math.random() * 720;
+    c.y = 110 + Math.random() * 360;
+    c.rot = (Math.random() - 0.5) * 0.18;
+  }
+  // Pinboard layout for suspects (top row)
+  const startX = 280, spacing = 175;
+  state.suspects.forEach((s, i) => {
+    s.x = startX + i * spacing;
+    s.y = 90;
+  });
+  // Weapons & motives down right side handled by Accusation dropdowns (cleaner)
+
+  // ----- UI setup -----
+  renderSceneList();
+  renderBriefing();
+  renderAccusationOptions();
+  updateClueCount();
+  document.getElementById('caseId').textContent = state.caseId;
+}
+
+function pickFalseDenial() {
+  return rand([
+    'I was elsewhere — though I would rather not say where, on my honour.',
+    'Find me a witness who claims otherwise. You will not.',
+    'I find the suggestion insulting and the question unworthy.',
+    'A bureau man should know better than to badger a citizen of standing.',
+    'I have already told the constabulary all I intend to say.'
+  ]);
+}
+
+let clueIdSeq = 0;
+function makeClue(text, links, scene) {
+  return {
+    id: 'c' + (++clueIdSeq),
+    text, links, scene,
+    discovered: false,
+    pinnedTo: null, // {type, id}
+    x: 0, y: 0, rot: 0,
+  };
+}
+
+// ---------------------------------------------------------------------
+// UI BUILDERS
+// ---------------------------------------------------------------------
+function renderSceneList() {
+  const el = document.getElementById('sceneList');
+  el.innerHTML = '';
+  state.scenes.forEach((s, i) => {
+    const d = document.createElement('div');
+    d.className = 'scene' + (s.examined ? ' done' : '');
+    d.innerHTML = `<b>${s.name}</b><span class="small">${s.examined ? '✓ Examined' : 'Click to examine'}</span>`;
+    d.onclick = () => examineScene(i);
+    el.appendChild(d);
+  });
+}
+
+function renderBriefing() {
+  document.getElementById('bfId').textContent = state.caseId;
+  document.getElementById('bfVictim').textContent = state.victim;
+  document.getElementById('bfLocation').textContent = state.location;
+  document.getElementById('bfTime').textContent = state.time;
+  document.getElementById('bfObs').textContent = state.obs;
+  document.getElementById('bfPersons').innerHTML =
+    state.suspects.map(s => `· ${s.name} <i style="color:#7a6a40">(${s.occ})</i>`).join('<br>');
+}
+
+function renderAccusationOptions() {
+  const ss = document.getElementById('accSuspect');
+  const ws = document.getElementById('accWeapon');
+  const ms = document.getElementById('accMotive');
+  ss.innerHTML = '<option value="">-- suspect --</option>' + state.suspects.map((s,i)=>`<option value="${i}">${s.name}</option>`).join('');
+  ws.innerHTML = '<option value="">-- weapon --</option>' + WEAPONS.map(w=>`<option value="${w.id}">${w.name}</option>`).join('');
+  ms.innerHTML = '<option value="">-- motive --</option>' + MOTIVES.map(m=>`<option value="${m.id}">${m.name}</option>`).join('');
+  [ss,ws,ms].forEach(el => el.onchange = updateAccBtn);
+  updateAccBtn();
+}
+function updateAccBtn() {
+  const ok = document.getElementById('accSuspect').value &&
+             document.getElementById('accWeapon').value &&
+             document.getElementById('accMotive').value;
+  document.getElementById('accBtn').disabled = !ok;
+}
+function updateClueCount() {
+  document.getElementById('clueCount').textContent = state.visibleClues.length + ' / ' + state.clues.length;
+}
+
+// ---------------------------------------------------------------------
+// FLOW
+// ---------------------------------------------------------------------
+function newCase() {
+  document.getElementById('title-card').style.display = 'none';
+  document.getElementById('endcard').style.display = 'none';
+  document.getElementById('interview').style.display = 'none';
+  generateCase();
+  showBriefing();
+}
+function showBriefing() {
+  document.getElementById('briefing').style.display = 'flex';
+}
+function closeBriefing() {
+  document.getElementById('briefing').style.display = 'none';
+}
+function examineScene(i) {
+  const s = state.scenes[i];
+  if (s.examined) return;
+  s.examined = true;
+  // Reveal clues from this scene
+  for (const cid of s.clueIds) {
+    const c = state.clues.find(x => x.id === cid);
+    if (c) {
+      c.discovered = true;
+      state.visibleClues.push(c);
+      // Animate-in pulse
+      state.feedbackPulses.push({ x: c.x, y: c.y, life: 1, color:'#caa050' });
+    }
+  }
+  renderSceneList();
+  updateClueCount();
+  flashLog('Examined ' + s.name + ' — ' + s.clueIds.length + ' new clue(s) on the board.');
+}
+
+function openInterview(suspectIdx) {
+  const s = state.suspects[suspectIdx];
+  document.getElementById('ivName').textContent = s.name;
+  document.getElementById('ivOcc').textContent = s.occ + ' — Alibi: ' + s.alibi;
+  document.getElementById('ivQuote').textContent = s.interviewLine;
+  document.getElementById('interview').style.display = 'block';
+}
+function closeInterview() {
+  document.getElementById('interview').style.display = 'none';
+}
+
+// ---------------------------------------------------------------------
+// PINBOARD INTERACTION
+// ---------------------------------------------------------------------
+const mouse = {x:0,y:0,down:false};
+canvas.addEventListener('mousemove', e => {
+  const r = canvas.getBoundingClientRect();
+  mouse.x = (e.clientX - r.left) * (W / r.width);
+  mouse.y = (e.clientY - r.top) * (H / r.height);
+  if (state.drag) {
+    state.drag.x = mouse.x - state.dragOffset.x;
+    state.drag.y = mouse.y - state.dragOffset.y;
+  }
+  state.hoverSuspect = pickSuspectAt(mouse.x, mouse.y);
+  state.hoverClue = pickClueAt(mouse.x, mouse.y);
+});
+canvas.addEventListener('mousedown', e => {
+  mouse.down = true;
+  const c = pickClueAt(mouse.x, mouse.y);
+  if (c) {
+    state.drag = c;
+    state.dragOffset.x = mouse.x - c.x;
+    state.dragOffset.y = mouse.y - c.y;
+    c.dragging = true;
+    return;
+  }
+  const sIdx = pickSuspectAt(mouse.x, mouse.y);
+  if (sIdx !== -1) openInterview(sIdx);
+});
+canvas.addEventListener('mouseup', e => {
+  mouse.down = false;
+  if (state.drag) {
+    const c = state.drag;
+    c.dragging = false;
+    // Check if dropped on suspect
+    const sIdx = pickSuspectAt(mouse.x, mouse.y);
+    if (sIdx !== -1) pinClueToSuspect(c, sIdx);
+    state.drag = null;
+  }
+});
+
+function pickClueAt(x, y) {
+  for (let i = state.visibleClues.length - 1; i >= 0; i--) {
+    const c = state.visibleClues[i];
+    const cw = 180, ch = 90;
+    if (Math.abs(x - c.x) < cw/2 && Math.abs(y - c.y) < ch/2) return c;
+  }
+  return null;
+}
+function pickSuspectAt(x, y) {
+  for (let i = 0; i < state.suspects.length; i++) {
+    const s = state.suspects[i];
+    if (Math.abs(x - s.x) < 75 && Math.abs(y - s.y) < 90) return i;
+  }
+  return -1;
+}
+
+function pinClueToSuspect(clue, suspectIdx) {
+  clue.pinnedTo = { type:'suspect', id: suspectIdx };
+  // Position clue below suspect column
+  const s = state.suspects[suspectIdx];
+  const stack = state.visibleClues.filter(x => x.pinnedTo && x.pinnedTo.type === 'suspect' && x.pinnedTo.id === suspectIdx);
+  const slot = stack.length - 1;
+  clue.x = s.x + (Math.random() - 0.5) * 30;
+  clue.y = s.y + 130 + slot * 30 + (Math.random() - 0.5) * 8;
+  clue.rot = (Math.random() - 0.5) * 0.14;
+
+  // EVALUATE LINK
+  let verdict = 'ambig', text = 'AMBIGUOUS';
+  if (clue.links.suspectId === suspectIdx) {
+    verdict = 'strong'; text = 'IMPLICATES — STRONG';
+  } else if (clue.links.exoneratesId === suspectIdx) {
+    verdict = 'weak'; text = 'EXONERATES — WEAK';
+  } else if (clue.links.suspectId !== undefined && clue.links.suspectId !== suspectIdx) {
+    verdict = 'weak'; text = 'FALSE LINK';
+  } else if (clue.links.redHerring) {
+    verdict = 'ambig'; text = 'COINCIDENCE';
+  }
+  showVerdictTag(text, verdict, clue.x, clue.y - 60);
+  // Pulse
+  state.feedbackPulses.push({
+    x: clue.x, y: clue.y, life: 1,
+    color: verdict === 'strong' ? '#4a8a3a' : verdict === 'weak' ? '#c84a3a' : '#caa050'
+  });
+}
+
+function showVerdictTag(text, cls, x, y) {
+  const r = canvas.getBoundingClientRect();
+  const sx = (x / W) * r.width + r.left;
+  const sy = (y / H) * r.height + r.top;
+  const tag = document.getElementById('verdict-tag');
+  tag.textContent = text;
+  tag.className = 'show ' + cls;
+  tag.style.left = sx + 'px';
+  tag.style.top = sy + 'px';
+  clearTimeout(showVerdictTag._t);
+  showVerdictTag._t = setTimeout(() => tag.className = '', 1800);
+}
+
+// ---------------------------------------------------------------------
+// RENDERING
+// ---------------------------------------------------------------------
+function draw() {
+  drawCorkBackground();
+  drawSuspects();
+  drawClues();
+  drawDrag();
+  drawPulses();
+  drawHints();
+}
+
+function drawCorkBackground() {
+  // Base cork color
+  ctx.fillStyle = '#8a6840';
+  ctx.fillRect(0,0,W,H);
+  // Cork specks
+  if (!drawCorkBackground._cache) {
+    const off = document.createElement('canvas');
+    off.width = W; off.height = H;
+    const oc = off.getContext('2d');
+    oc.fillStyle = '#8a6840';
+    oc.fillRect(0,0,W,H);
+    for (let i = 0; i < 4200; i++) {
+      const x = Math.random()*W, y = Math.random()*H;
+      const r = Math.random()*1.5 + 0.4;
+      oc.fillStyle = `rgba(${50 + Math.random()*80},${30 + Math.random()*40},${10 + Math.random()*20},${0.3 + Math.random()*0.4})`;
+      oc.beginPath();
+      oc.arc(x, y, r, 0, Math.PI*2);
+      oc.fill();
+    }
+    drawCorkBackground._cache = off;
+  }
+  ctx.drawImage(drawCorkBackground._cache, 0, 0);
+  // Vignette
+  const g = ctx.createRadialGradient(W/2, H/2, H*0.25, W/2, H/2, H*0.85);
+  g.addColorStop(0,'rgba(0,0,0,0)');
+  g.addColorStop(1,'rgba(0,0,0,0.55)');
+  ctx.fillStyle = g;
+  ctx.fillRect(0,0,W,H);
+  // Frame border
+  ctx.strokeStyle = 'rgba(30,18,8,0.6)';
+  ctx.lineWidth = 14;
+  ctx.strokeRect(0,0,W,H);
+}
+
+function drawSuspects() {
+  state.suspects.forEach((s, i) => {
+    drawSuspectCard(s, i === state.hoverSuspect);
+  });
+}
+function drawSuspectCard(s, hover) {
+  const x = s.x, y = s.y;
+  const cw = 130, ch = 160;
+  ctx.save();
+  ctx.translate(x, y);
+  if (hover) ctx.translate(0, -3);
+  // Card shadow
+  ctx.fillStyle = 'rgba(0,0,0,0.45)';
+  ctx.fillRect(-cw/2 + 4, -ch/2 + 6, cw, ch);
+  // Card
+  ctx.fillStyle = '#e8dcc0';
+  ctx.fillRect(-cw/2, -ch/2, cw, ch);
+  // Inner border
+  ctx.strokeStyle = '#3a2818';
+  ctx.lineWidth = 1.5;
+  ctx.strokeRect(-cw/2 + 4, -ch/2 + 4, cw - 8, ch - 8);
+  // Portrait area
+  const py = -ch/2 + 12;
+  ctx.fillStyle = '#c8b890';
+  ctx.fillRect(-cw/2 + 10, py, cw - 20, 80);
+  // Face
+  drawPortrait(0, py + 40, s);
+  // Name
+  ctx.fillStyle = '#1a1410';
+  ctx.font = 'bold 12px Georgia';
+  ctx.textAlign = 'center';
+  ctx.fillText(s.name, 0, py + 100);
+  // Occupation
+  ctx.font = 'italic 10px Georgia';
+  ctx.fillStyle = '#5a4030';
+  ctx.fillText(s.occ, 0, py + 116);
+  // Suspect number
+  ctx.font = 'bold 9px Courier New';
+  ctx.fillStyle = '#a4441e';
+  ctx.fillText('PERSON OF INTEREST №' + (s.slot + 1), 0, ch/2 - 14);
+  // Pushpin
+  drawPin(0, -ch/2 + 4, '#a4441e');
+  ctx.restore();
+}
+function drawPortrait(x, y, s) {
+  // Skin
+  ctx.fillStyle = s.skin;
+  ctx.beginPath();
+  ctx.arc(x, y, 22, 0, Math.PI*2);
+  ctx.fill();
+  // Hair
+  ctx.fillStyle = s.hair;
+  ctx.beginPath();
+  ctx.arc(x, y - 6, 22, Math.PI, Math.PI*2);
+  ctx.fill();
+  ctx.fillRect(x - 22, y - 6, 44, 5);
+  // Eyes
+  ctx.fillStyle = '#1a1410';
+  ctx.fillRect(x - 8, y - 2, 3, 4);
+  ctx.fillRect(x + 5, y - 2, 3, 4);
+  // Mouth
+  ctx.strokeStyle = '#5a2818';
+  ctx.lineWidth = 1.5;
+  ctx.beginPath();
+  ctx.moveTo(x - 5, y + 8);
+  ctx.lineTo(x + 5, y + 8);
+  ctx.stroke();
+  // Collar
+  ctx.fillStyle = s.cloth;
+  ctx.beginPath();
+  ctx.moveTo(x - 22, y + 22);
+  ctx.lineTo(x + 22, y + 22);
+  ctx.lineTo(x + 30, y + 40);
+  ctx.lineTo(x - 30, y + 40);
+  ctx.closePath();
+  ctx.fill();
+}
+
+function drawClues() {
+  for (const c of state.visibleClues) {
+    if (c === state.drag) continue;
+    drawClueCard(c);
+  }
+}
+function drawClueCard(c) {
+  ctx.save();
+  ctx.translate(c.x, c.y);
+  ctx.rotate(c.rot);
+  const cw = 180, ch = 90;
+  // Shadow
+  ctx.fillStyle = 'rgba(0,0,0,0.45)';
+  ctx.fillRect(-cw/2 + 3, -ch/2 + 4, cw, ch);
+  // Paper
+  ctx.fillStyle = '#f0e4c0';
+  ctx.fillRect(-cw/2, -ch/2, cw, ch);
+  // Slight torn edge
+  ctx.fillStyle = '#d8c8a0';
+  ctx.fillRect(-cw/2, -ch/2, cw, 6);
+  // Frame for hover/drag
+  if (c === state.hoverClue || c.dragging) {
+    ctx.strokeStyle = '#caa050';
+    ctx.lineWidth = 2;
+    ctx.strokeRect(-cw/2, -ch/2, cw, ch);
+  }
+  // Text
+  ctx.fillStyle = '#1a1410';
+  ctx.font = '10.5px Georgia';
+  ctx.textAlign = 'left';
+  wrapText(c.text, -cw/2 + 10, -ch/2 + 18, cw - 20, 12);
+  // Scene tag
+  ctx.font = 'bold 8px Courier New';
+  ctx.fillStyle = '#a4441e';
+  ctx.fillText('· ' + c.scene.toUpperCase() + ' ·', -cw/2 + 10, ch/2 - 8);
+  // Pushpin
+  drawPin(0, -ch/2 + 2, c.pinnedTo ? '#4a6a3a' : '#3a4858');
+  ctx.restore();
+
+  // Thread from clue to its pinned suspect
+  if (c.pinnedTo && c.pinnedTo.type === 'suspect') {
+    const s = state.suspects[c.pinnedTo.id];
+    const verdict = evaluateLink(c, c.pinnedTo.id);
+    const color = verdict === 'strong' ? 'rgba(74,138,58,0.7)' :
+                  verdict === 'weak'   ? 'rgba(200,74,58,0.7)' :
+                                          'rgba(180,160,80,0.55)';
+    ctx.strokeStyle = color;
+    ctx.lineWidth = 1.6;
+    ctx.beginPath();
+    ctx.moveTo(c.x, c.y - 35);
+    ctx.lineTo(s.x, s.y + 70);
+    ctx.stroke();
+  }
+}
+function evaluateLink(clue, suspectIdx) {
+  if (clue.links.suspectId === suspectIdx) return 'strong';
+  if (clue.links.exoneratesId === suspectIdx) return 'weak';
+  if (clue.links.suspectId !== undefined && clue.links.suspectId !== suspectIdx) return 'weak';
+  return 'ambig';
+}
+
+function wrapText(text, x, y, maxW, lineH) {
+  const words = text.split(' ');
+  let line = '';
+  for (let n = 0; n < words.length; n++) {
+    const test = line + words[n] + ' ';
+    if (ctx.measureText(test).width > maxW && n > 0) {
+      ctx.fillText(line, x, y);
+      line = words[n] + ' ';
+      y += lineH;
+    } else {
+      line = test;
+    }
+  }
+  ctx.fillText(line, x, y);
+}
+
+function drawDrag() {
+  if (!state.drag) return;
+  drawClueCard(state.drag);
+}
+
+function drawPin(x, y, color) {
+  // Pin head
+  ctx.fillStyle = color;
+  ctx.beginPath();
+  ctx.arc(x, y, 5, 0, Math.PI*2);
+  ctx.fill();
+  // Highlight
+  ctx.fillStyle = 'rgba(255,255,255,0.5)';
+  ctx.beginPath();
+  ctx.arc(x - 1.5, y - 1.5, 1.5, 0, Math.PI*2);
+  ctx.fill();
+  // Shadow
+  ctx.fillStyle = 'rgba(0,0,0,0.25)';
+  ctx.beginPath();
+  ctx.arc(x + 2, y + 1, 5, 0, Math.PI*2);
+  ctx.fill();
+}
+
+function drawPulses() {
+  for (const p of state.feedbackPulses) {
+    p.life -= 0.025;
+    const r = (1 - p.life) * 60;
+    ctx.strokeStyle = p.color + Math.floor(p.life * 200).toString(16).padStart(2,'0');
+    ctx.lineWidth = 2;
+    ctx.beginPath();
+    ctx.arc(p.x, p.y, r, 0, Math.PI*2);
+    ctx.stroke();
+  }
+  state.feedbackPulses = state.feedbackPulses.filter(p => p.life > 0);
+}
+
+function drawHints() {
+  if (state.visibleClues.length > 0) return;
+  ctx.fillStyle = 'rgba(255,235,180,0.45)';
+  ctx.font = 'italic 16px Georgia';
+  ctx.textAlign = 'center';
+  ctx.fillText('Examine scenes from the left panel to reveal clues.', W/2, 380);
+  ctx.fillText('Click a suspect to interview. Drag a clue onto a suspect to pin a theory.', W/2, 410);
+}
+
+// ---------------------------------------------------------------------
+// ACCUSATION
+// ---------------------------------------------------------------------
+function makeAccusation() {
+  if (state.ended) return;
+  const sIdx = parseInt(document.getElementById('accSuspect').value);
+  const wId  = document.getElementById('accWeapon').value;
+  const mId  = document.getElementById('accMotive').value;
+
+  const correctSuspect = sIdx === state.culprit;
+  const correctWeapon  = wId === state.weapon;
+  const correctMotive  = mId === state.motive;
+  const score = (correctSuspect?1:0) + (correctWeapon?1:0) + (correctMotive?1:0);
+
+  state.ended = true;
+  const culprit = state.suspects[state.culprit];
+  const wpn = WEAPONS.find(w => w.id === state.weapon);
+  const mot = MOTIVES.find(m => m.id === state.motive);
+  const card = document.getElementById('endcard');
+  const title = document.getElementById('endTitle');
+  const body  = document.getElementById('endBody');
+  const reveal = document.getElementById('endReveal');
+  const stats  = document.getElementById('endStats');
+
+  if (score === 3) {
+    title.textContent = 'CASE CLOSED';
+    title.className = '';
+    body.textContent = 'Your accusation lands. The Bureau Inspector nods slowly. Promotion is recommended.';
+  } else if (score >= 1) {
+    title.textContent = 'PARTIAL CONVICTION';
+    title.className = '';
+    body.textContent = 'A conviction is secured — but the case is not entirely resolved. Loose threads remain in the bureau\'s file.';
+  } else {
+    title.textContent = 'CASE LOST';
+    title.className = 'fail';
+    body.textContent = 'The wrong party stands convicted. The true culprit walks among us. The bureau will remember this.';
+  }
+
+  reveal.innerHTML =
+    `<b style="color:#caa050">TRUE SOLUTION</b><br>` +
+    `Culprit: <b>${culprit.name}</b> <span style="color:#7a6a40">(${culprit.occ})</span><br>` +
+    `Weapon: <b>${wpn.name}</b><br>` +
+    `Motive: <b>${mot.name}</b> — ${mot.text}<br><br>` +
+    `<b style="color:#caa050">YOUR ACCUSATION</b><br>` +
+    `Suspect: ${state.suspects[sIdx].name} ${correctSuspect?'✓':'✗'}<br>` +
+    `Weapon: ${WEAPONS.find(w=>w.id===wId).name} ${correctWeapon?'✓':'✗'}<br>` +
+    `Motive: ${MOTIVES.find(m=>m.id===mId).name} ${correctMotive?'✓':'✗'}`;
+
+  stats.textContent = `${state.visibleClues.length} / ${state.clues.length} clues recovered · ${Object.keys(state.pinned).length} pinned theories · Bureau rating: ${'★'.repeat(score)}${'☆'.repeat(3-score)}`;
+
+  card.style.display = 'flex';
+}
+
+function flashLog(msg) {
+  // simple console-style log
+  console.log('[Veilbreak]', msg);
+}
+
+// ---------------------------------------------------------------------
+// MAIN LOOP
+// ---------------------------------------------------------------------
+function loop() {
+  draw();
+  requestAnimationFrame(loop);
+}
+loop();
+</script>
+</body>
+</html>
